@@ -1,7 +1,9 @@
 const OSS = require('ali-oss')
 const config = require('./../config')
 const router = require('koa-router')()
-const multer = require('koa-multer'); //加载koa-multer模块
+const multer = require('@koa/multer'); 
+// https://www.npmjs.com/package/@koa/multer
+// https://bingzhe.github.io/2018/11/22/koa-%E5%85%AD-koa-multer%E4%B8%8A%E4%BC%A0%E6%96%87%E4%BB%B6/
 
 let client = new OSS({
   region: config.oss.region,
@@ -12,18 +14,17 @@ let client = new OSS({
 
 var storage = multer.diskStorage({
   destination: function (req, file, cb) {
-    (async function put() {
-      try {
-        // object表示上传到OSS的Object名称，localfile表示本地文件或者文件路径
-        // let r1 = await client.put('object', '/Users/fuzhongkuo/Documents/picture/certificates/ken400-600.jpg');
-        var fileFormat = (file.originalname).split("."); //以点分割成数组，数组的最后一项就是后缀名
-        let r1 = await client.put(Date.now() + "." + fileFormat[fileFormat.length - 1], file.stream);
-        cb(null, r1.url) //回调将url传递回去
-      } catch (e) {
-        console.error('error: ', e);
-      }
-    }
-    )();
+    // 上传到本地目录
+    cb(null, 'public/upload'); //配置图片上传的目录
+  },
+  filename: function (req, file, cb) {   /*图片上传完成重命名*/
+    const fileFormat = (file.originalname).split(".");
+    const filename = Date.now() + "." + fileFormat[fileFormat.length - 1] // 确保本地文件名和服务器文件名一致
+    // 同时上传到oss服务器
+    client.put(filename, file.stream).then(res => {
+      console.log(res, res.url)
+      cb(null, filename);
+    })
   }
 })
 
@@ -32,10 +33,13 @@ var upload = multer({
 });
 
 router.post('/upload', upload.single('file'), async (ctx, next) => {
-  console.log(ctx.req.file.destination) // 拿到storage上面返回的oss路径
+  // console.log('ctx.request.file', ctx.request.file);
+  // console.log('ctx.file', ctx.file);
+  // console.log('ctx.request.body', ctx.request.body);
+  const filename = `http://${config.oss.bucket}.${config.oss.region}.aliyuncs.com/${ctx.file.filename}`
   ctx.body = {
     code: 200,
-    data: ctx.req.file.destination,
+    data: filename,
     dataMsg: 'success'
   };
 })
