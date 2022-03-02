@@ -125,7 +125,7 @@ class Article {
     } = param
     return new Promise((resolve, reject) => {
       pool.query(`insert into article (title, type, content, thumbnail, author, create_time, is_top, tag_id, sourse, preview_num, abstract) 
-      values ("${title}", ${type}, '${content}',"${thumbnail}", "${author}", now(), ${is_top}, "${tag_id}", "${sourse}", 0, "${abstract}")`, (e, res, fields) => {
+      values ("${title}", ${type}, "${content}","${thumbnail}", "${author}", now(), ${is_top}, "${tag_id}", "${sourse}", 0, "${abstract}")`, (e, res, fields) => {
         if (e) {
           logs.createLogs(e, 'fail')
           throw e
@@ -156,7 +156,7 @@ class Article {
     return new Promise((resolve, reject) => {
       pool.query(`update article set title="${title}", 
       type=${type}, 
-      content='${content}', 
+      content="${content}", 
       thumbnail="${thumbnail}", 
       author="${author}", 
       update_time=now(), 
